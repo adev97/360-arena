@@ -1,6 +1,7 @@
 %% random dot, optic flow stimulus creation for head fixed mice
 
-function OpticFlow_master_dots(savename)
+
+function OpticFlow_master_360dots(savename)
 
 table = {'Square Size (deg)', 10, 1, 10;...
     'Square PositionX (deg)', -145, 10, 145;...
@@ -16,7 +17,7 @@ table = {'Square Size (deg)', 10, 1, 10;...
 stimType = 'Receptive Field Mapping';
 
 trials = trialStruct_RFmapFast(stimType, table);
-ReceptiveFieldMapping_Fast_360degLED(trials);
+ReceptiveFieldMapping_Fast_360degLED(trials); %% this will change, likely OpticFlow_360LED(trials)
 
 savename = 'Mouse09_RFmap_Fast_100ms_EB'; 
 trialStructSave(trials,savename, 'Trial01');
