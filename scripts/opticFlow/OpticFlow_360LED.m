@@ -1,5 +1,3 @@
-%%%% From claude
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function OpticFlow_360LED(trials)
 % OPTICFLOW_360LED draws a forward-self-motion optic flow dot field on
@@ -14,18 +12,35 @@ function OpticFlow_360LED(trials)
 % angular coordinate system, no flat-screen/tangent-plane projection
 % needed here (contrast with the earlier flat-monitor RF mapper).
 %
-% Each dot recycles two independent ways: crossing the near DEPTH
-% boundary (respawns at the far edge, new random direction), and an
-% independent random LIFETIME countdown (respawns anywhere in the depth
-% range). This dual mechanism is intentional -- lifetime alone catches
-% dots that would otherwise linger near the focus of expansion (where
-% angular motion is slow even though depth motion isn't), which the
-% depth-cycle alone would not reliably catch.
+% Each dot recycles two independent ways: crossing a DEPTH boundary
+% (near boundary if moving forward, far boundary if moving backward --
+% both are checked every frame so either self-motion direction works
+% correctly), and an independent random LIFETIME countdown (respawns
+% anywhere in the depth range). This dual mechanism is intentional --
+% lifetime alone catches dots that would otherwise linger near the
+% focus of expansion/contraction (where angular motion is slow even
+% though depth motion isn't), which the depth-cycle alone would not
+% reliably catch.
+%
+% SWITCHING DIRECTION: set the 'Self Motion Direction (binary)' table
+% row in OpticFlow_master_360dots.m to 1 (forward) or -1 (backward).
+% Forward dots approach and cross the near boundary, respawning far;
+% backward dots recede and cross the far boundary, respawning near --
+% both cases are handled below.
 %
 % Dots regenerate fresh at the start of every trial (not carried over),
 % so trials are independent for downstream analysis. Trial duration and
 % inter-trial gray interval both come from each trial's Timing field
 % ([delay duration wait]), same convention as the RF mapper.
+%
+% Dot size follows a smooth, self-bounding falloff -- always strictly
+% between Dot_Size_Min and Dot_Size_Max, no hard clamping/saturation --
+% rather than an unbounded 1/r law that pins to Max for any close dot
+% and decays toward Min everywhere else. Dot_Size_RefDepth (cm) is the
+% distance PAST the near boundary (rMin) at which a dot's size has
+% decayed halfway from Max to Min; smaller values = faster falloff
+% (more dots look small), larger values = slower falloff (more dots
+% look mid-sized/large).
 %
 % INPUT: TRIALS - structure array from trialStruct_RFmapFast for
 %        stimType 'Optic Flow', built by OpticFlow_master_360dots.m
@@ -42,7 +57,6 @@ screenSizeDegY = monitorInfo.screenSizeDegY;
 N          = trials(1).Num_Dots;
 rMin       = trials(1).Depth_Min;
 rMax       = trials(1).Depth_Max;
-sizeBase   = trials(1).Dot_Size_Base;
 sizeMin    = trials(1).Dot_Size_Min;
 sizeMax    = trials(1).Dot_Size_Max;
 sizeRefZ   = trials(1).Dot_Size_RefDepth;
@@ -65,7 +79,6 @@ try
     blackLum = PixToLum(BlackIndex(screenNumber));
     grayLum  = (whiteLum + blackLum) / 2;
     grayPix  = GammaCorrect(grayLum);
-    dotColor = whitePix;
 
     HideCursor;
     [w, screenRect] = Screen('OpenWindow', screenNumber, grayPix); %#ok<ASGLU>
@@ -100,6 +113,7 @@ try
             %%%%%%%%%%%%%%%%%%%%%% SPAWN FRESH DOT CLOUD %%%%%%%%%%%%%%%%%%%
             [X, Y, Z] = localSpawnDots(N, rMin, rMax, elevMin, elevMax);
             lifetimeFrames = localRandomLifetimeFrames(N, lifeMinSec, lifeMaxSec, ifi);
+            dotColorVal = localRandomDotColor(N, blackPix, whitePix);
 
             nFrames = round(duration / ifi);
             vbl = Screen('Flip', w);
@@ -111,6 +125,10 @@ try
                 lifetimeFrames = lifetimeFrames - 1;
 
                 %%%%%%%%%%%%%%%%%%% DEPTH-BOUNDARY RESPAWN %%%%%%%%%%%%%%%%%
+                % Forward motion: dots approach and cross the NEAR
+                % boundary, respawn far. Backward motion: dots recede and
+                % cross the FAR boundary, respawn near. Both checked every
+                % frame so flipping Self_Motion_Direction just works.
                 idxNear = r < rMin;
                 if any(idxNear)
                     nR = sum(idxNear);
@@ -118,17 +136,31 @@ try
                         localSpawnDots(nR, rMax, rMax, elevMin, elevMax);
                     lifetimeFrames(idxNear) = ...
                         localRandomLifetimeFrames(nR, lifeMinSec, lifeMaxSec, ifi);
+                    dotColorVal(idxNear) = localRandomDotColor(nR, blackPix, whitePix);
                 end
+
+                idxFar = r > rMax;
+                if any(idxFar)
+                    nF = sum(idxFar);
+                    [X(idxFar), Y(idxFar), Z(idxFar)] = ...
+                        localSpawnDots(nF, rMin, rMin, elevMin, elevMax);
+                    lifetimeFrames(idxFar) = ...
+                        localRandomLifetimeFrames(nF, lifeMinSec, lifeMaxSec, ifi);
+                    dotColorVal(idxFar) = localRandomDotColor(nF, blackPix, whitePix);
+                end
+
+                idxBoundary = idxNear | idxFar;
 
                 %%%%%%%%%%%%%%%%%%%%%% LIFETIME RESPAWN %%%%%%%%%%%%%%%%%%%%
                 % Checked only on dots that didn't just respawn above.
-                idxExpired = (lifetimeFrames <= 0) & ~idxNear;
+                idxExpired = (lifetimeFrames <= 0) & ~idxBoundary;
                 if any(idxExpired)
                     nL = sum(idxExpired);
                     [X(idxExpired), Y(idxExpired), Z(idxExpired)] = ...
                         localSpawnDots(nL, rMin, rMax, elevMin, elevMax);
                     lifetimeFrames(idxExpired) = ...
                         localRandomLifetimeFrames(nL, lifeMinSec, lifeMaxSec, ifi);
+                    dotColorVal(idxExpired) = localRandomDotColor(nL, blackPix, whitePix);
                 end
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%% PROJECT %%%%%%%%%%%%%%%%%%%%%%%%
@@ -139,15 +171,14 @@ try
                 xPix = azimuth / degPerPix;
                 yPix = (screenSizeDegY/2 - elevation) / degPerPix;
 
-                radiusPix = sizeBase * sizeRefZ ./ r;
-                radiusPix = min(max(radiusPix, sizeMin), sizeMax);
+                radiusPix = sizeMin + (sizeMax - sizeMin) * sizeRefZ ./ (sizeRefZ + (r - rMin));
 
                 dotRects = [xPix - radiusPix; yPix - radiusPix; ...
                             xPix + radiusPix; yPix + radiusPix];
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DRAW %%%%%%%%%%%%%%%%%%%%%%%%%
                 Screen('FillRect', w, grayPix);
-                Screen('FillOval', w, dotColor, dotRects);
+                Screen('FillOval', w, repmat(dotColorVal, 3, 1), dotRects);
 
                 vbl = Screen('Flip', w, vbl + (waitframes - 0.5) * ifi);
 
@@ -205,6 +236,17 @@ elevation0 = elevMin + (elevMax - elevMin) * rand(1, n);
 Z = r .* cosd(elevation0) .* cosd(azimuth0);
 X = r .* cosd(elevation0) .* sind(azimuth0);
 Y = r .* sind(elevation0);
+end
+
+%% ------------------------------------------------------------------
+function colorVal = localRandomDotColor(n, blackPix, whitePix)
+% Assigns each of n dots a color independently at random: ~50% black,
+% ~50% white. Called at initial spawn and again at every respawn (both
+% depth-boundary and lifetime), so a dot's color is redrawn each time it
+% reappears, same as its position and lifetime are.
+isWhite = rand(1, n) < 0.5;
+colorVal = blackPix * ones(1, n);
+colorVal(isWhite) = whitePix;
 end
 
 %% ------------------------------------------------------------------
