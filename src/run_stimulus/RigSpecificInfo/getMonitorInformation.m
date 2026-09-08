@@ -7,13 +7,14 @@ function monitorInfo = getMonitorInformation()
 
 %%%%%%%%%%%%%%%%%%%%%%%% MONITOR INFORMATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-monitorInfo.screenNumber = 2; %2;
+monitorInfo.screenNumber = 2;
 monitorInfo.screenSizeDegX = 360;
 monitorInfo.screenSizeDegY = 90;
 monitorInfo.screenSizePixX = 960;
 monitorInfo.screenSizePixY = 240;
 monitorInfo.degPerPix = monitorInfo.screenSizeDegX/...
-    monitorInfo.screenSizePixX;                     
+    monitorInfo.screenSizePixX;
+monitorInfo.diameter = 61; % cm
 
 monitorInfo.powerLawScaleFactor = .0001801;
 monitorInfo.gamma = 2.386;

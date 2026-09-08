@@ -32,7 +32,7 @@ function trialStructSave_360(trials, meta, savename, tag, iftest)
 %tag = 'test_1';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load dirInformation file containing the DAQPC raw data file address
-dirInformation;
+dirInformation_AD;
 % Get the current date and time, formatted YYYYMMDD_HHmmss (zero-padded, no separators)
 nowTime = datetime('now', 'Format', 'yyyyMMdd_HHmmss');
 date = char(nowTime);

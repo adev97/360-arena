@@ -12,8 +12,8 @@ function trials = OpticFlow_master_360dots(savename)
 % Repeats+1 times" branch, giving Repeats+1 identical forward-flow
 % trials -- exactly what a single-condition run needs.
 %
-% EXTENDING TO BACKWARD MOTION: change 'Self Motion Direction' below to
-% -1 for a single backward (contracting) run -- OpticFlow_360LED.m now
+% Change 'Self Motion Direction' below to
+% 1 for a single backward (contracting) run -- OpticFlow_360LED.m now
 % handles both directions' depth-boundary respawn correctly. To have
 % BOTH directions within one randomized/repeated run, change the row to
 % a real varying param (-1, 2, 1, giving values [-1 1]) and set
@@ -21,8 +21,6 @@ function trials = OpticFlow_master_360dots(savename)
 % directions automatically, same as it does for any other parameter.
 
 monitorInfo = getMonitorInformation();
-
-% monitorInformation;
 
 table = {'Self Motion Direction (binary)', -1, [], [];...   % -1 = forward. 1 = backward
          'Self Motion Speed (cmps)', 30, [], [];...        % TUNE
@@ -44,7 +42,7 @@ table = {'Self Motion Direction (binary)', -1, [], [];...   % -1 = forward. 1 = 
 stimType = 'Optic Flow';
 user = 'AD'; % experimenter initials
 tag = 'm001'; % change for which mouse it is (m - male, f - female)
-iftest = 0; % if this is a test run, 1, if not a test run, 0
+iftest = 1; % if this is a test run, 1, if not a test run, 0
 trials = trialStruct_RFmapFast_AD(stimType, table); % unchanged from Elissa's script
 
 % Metadata: what code/config/rig/session produced this trials struct, so
