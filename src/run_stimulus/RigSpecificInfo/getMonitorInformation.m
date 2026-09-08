@@ -14,7 +14,7 @@ monitorInfo.screenSizePixX = 960;
 monitorInfo.screenSizePixY = 240;
 monitorInfo.degPerPix = monitorInfo.screenSizeDegX/...
     monitorInfo.screenSizePixX;
-monitorInfo.diameter = 61; % cm
+monitorInfo.radius = 61/2; % cm
 
 monitorInfo.powerLawScaleFactor = .0001801;
 monitorInfo.gamma = 2.386;
