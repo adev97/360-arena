@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function OpticFlow_360LED(trials)
+function displayOpticFlow_360LED(trials)
 % OPTICFLOW_360LED draws a forward-self-motion optic flow dot field on
 % the 360deg LED arena, one trial at a time from the TRIALS struct built
 % by trialStruct_RFmapFast (same pipeline as ReceptiveFieldMapping_Fast_
@@ -46,7 +46,7 @@ function OpticFlow_360LED(trials)
 %        stimType 'Optic Flow', built by OpticFlow_master_360dots.m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-monitorInformation;
+monitorInfo = getMonitorInformation();
 
 degPerPix      = monitorInfo.degPerPix; % assumes square angular pixels
 screenSizeDegY = monitorInfo.screenSizeDegY;

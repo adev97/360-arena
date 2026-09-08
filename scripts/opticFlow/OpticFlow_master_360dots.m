@@ -20,9 +20,11 @@ function trials = OpticFlow_master_360dots(savename)
 % Randomize = 1; trialStruct_RFmapFast will cross/shuffle/repeat both
 % directions automatically, same as it does for any other parameter.
 
-monitorInformation;
+monitorInfo = getMonitorInformation();
 
-table = {'Self Motion Direction (binary)', -1, [], [];...   % 1 = forward. -1 = backward (not yet used)
+% monitorInformation;
+
+table = {'Self Motion Direction (binary)', -1, [], [];...   % -1 = forward. 1 = backward
          'Self Motion Speed (cmps)', 30, [], [];...        % TUNE
          'Num Dots', 300, [], [];...
          'Depth Min (cm)', 10, [], [];...                   % TUNE -- virtual world units
@@ -40,14 +42,30 @@ table = {'Self Motion Direction (binary)', -1, [], [];...   % 1 = forward. -1 = 
          'Initialization Screen (s)', 5, [], []};
 
 stimType = 'Optic Flow';
+user = 'AD'; % experimenter initials
+tag = 'm001'; % change for which mouse it is (m - male, f - female)
+iftest = 0; % if this is a test run, 1, if not a test run, 0
+trials = trialStruct_RFmapFast(stimType, table); % unchanged from Elissa's script
 
-trials = trialStruct_RFmapFast_AD(stimType, table);
-OpticFlow_360LED(trials);
+% Metadata: what code/config/rig/session produced this trials struct, so
+% it's saved alongside the data instead of only living in this script.
+meta.monitorInfo    = monitorInfo;
+meta.user            = user;
+meta.tag             = tag;
+meta.stimType        = stimType;
+meta.stimulusTable   = table;
+nowTime              = datetime('now');
+meta.dateStr         = char(datetime(nowTime, 'Format', 'yyyyMMdd'));
+meta.timestamp       = char(datetime(nowTime, 'Format', 'yyyy-MM-dd HH:mm:ss'));
+meta.matlabVersion   = version;
 
-% if nargin < 1 || isempty(savename)
-%     savename = 'OpticFlowForward_100cmps'; % default if not supplied
-% end
-% trialStructSave(trials, savename, 'Trial01');
+displayOpticFlow_360LED(trials);
+
+if nargin < 1 || isempty(savename)
+    savename = 'OpticFlowForward_100cmps'; % default if not supplied
+end
+
+trialStructSave_360(trials, meta, savename, tag, iftest);
 
 %% try doing something where its fixed and then suddenly moves in one direction
 % and try keeping all the dots on the screen during optic flow
