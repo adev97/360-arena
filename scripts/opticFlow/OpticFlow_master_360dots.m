@@ -25,15 +25,15 @@ monitorInfo = getMonitorInformation();
 R_arena = monitorInfo.radius;
 
 table = {'Self Motion Direction (binary)', -1, [], [];...   % -1 = forward. 1 = backward
-         'Self Motion Speed (cmps)', 30, [], [];...        % TUNE
+         'Self Motion Speed (cmps)', 15, [], [];...        % TUNE
          'Num Dots', 300, [], [];...
          'Depth Min (cm)', 2*R_arena, [], [];...            % inner diameter of virtual world (2 * arena radius)
          'Depth Max (cm)', 3*R_arena, [], [];...            % outer diameter of virtual world (2 * arena radius)
          'Dot Size Min (px)', 2, [], [];...                 % TUNE
          'Dot Size Max (px)', 12, [], [];...                % TUNE
-         'Dot Size RefDepth (cm)', 15, [], [];...           % TUNE -- distance past rMin where size hits the halfway point
-         'Dot Lifetime Min (s)', 0.5, [], [];...            % TUNE
-         'Dot Lifetime Max (s)', 1.5, [], [];...            % TUNE
+         'Dot Size RefDepth (cm)', 5, [], [];...           % TUNE -- distance past rMin where size hits the halfway point
+         'Dot Lifetime Min (s)', 2, [], [];...            % TUNE
+         'Dot Lifetime Max (s)', 4, [], [];...            % TUNE
          'Timing (delay,duration,wait)', 0, 20, 3;...         % duration=5s flow, wait=3s ITI
          'Blank', 0, [], [];...
          'Randomize', 0, [], [];...                          % nothing to randomize yet (one condition)
