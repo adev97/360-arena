@@ -38,14 +38,14 @@ table = {'Self Motion Direction (binary)', -1, [], [];...   % -1 = forward. 1 = 
          'Blank', 0, [], [];...
          'Randomize', 0, [], [];...                          % nothing to randomize yet (one condition)
          'Interleave', 0, [], [];...
-         'Repeats', 4, [], [];...                           % 19 -> 20 trials total. LOWER FOR TESTING
+         'Repeats', 1, [], [];...                           % 19 -> 20 trials total. LOWER FOR TESTING
          'Initialization Screen (s)', 5, [], []};
 
 stimType = 'Optic Flow';
 user = 'AD'; % experimenter initials
 tag = 'm001'; % change for which mouse it is (m - male, f - female)
 iftest = 0; % if this is a test run, 1, if not a test run, 0
-trials = trialStruct_RFmapFast(stimType, table); % unchanged from Elissa's script
+trials = trialStruct_RFmapFast_AD(stimType, table); % unchanged from Elissa's script
 
 % Metadata: what code/config/rig/session produced this trials struct, so
 % it's saved alongside the data instead of only living in this script.
