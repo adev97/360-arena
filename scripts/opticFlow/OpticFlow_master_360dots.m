@@ -22,11 +22,13 @@ function trials = OpticFlow_master_360dots(savename)
 
 monitorInfo = getMonitorInformation();
 
+R_arena = monitorInfo.radius;
+
 table = {'Self Motion Direction (binary)', -1, [], [];...   % -1 = forward. 1 = backward
          'Self Motion Speed (cmps)', 30, [], [];...        % TUNE
          'Num Dots', 300, [], [];...
-         'Depth Min (cm)', 10, [], [];...                   % TUNE -- virtual world units
-         'Depth Max (cm)', 100, [], [];...                 % TUNE
+         'Depth Min (cm)', 2*R_arena, [], [];...                   % TUNE -- virtual world units
+         'Depth Max (cm)', 3*R_arena, [], [];...                 % TUNE
          'Dot Size Min (px)', 2, [], [];...                 % TUNE
          'Dot Size Max (px)', 12, [], [];...                % TUNE
          'Dot Size RefDepth (cm)', 15, [], [];...           % TUNE -- distance past rMin where size hits the halfway point
