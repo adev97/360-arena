@@ -1,83 +1,101 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function trials = LinearSweep_master_360dots(savename)
-% LINEARSWEEP_MASTER_360DOTS - same 3-function structure as your other 360-
-% arena scripts (getMonitorInformation -> trialStruct_RFmapFast_AD ->
-% display function), driving a "hyperspace"-style dot field: dots spawn
-% randomly and sit stationary, then stream apart from a chosen vanishing-
-% point azimuth (radiating outward in azimuth only, no depth/Z simulation),
-% then freeze in their final position.
+function [trials, meta] = LinearSweep_master_360dots(savename)
+% LINEARSWEEP_MASTER_360DOTS  Recycled moving dots in a bounded 3-D world.
+% Workflow: master -> trialStruct_RFmapFast_AD -> displayLinearSweep_360LED.
 %
-% VANISHING POINT / DIRECTION: 'Sweep Direction (1-6)' selects which of 6
-% evenly-spaced (60 deg apart) azimuths, relative to the mouse's forward
-% view (azimuth 0 = straight ahead, decreasing azimuth = left), acts as
-% the point dots radiate away from:
-%   1 = Front       (0 deg)
-%   2 = Front-Left  (-60 deg)
-%   3 = Back-Left   (-120 deg)
-%   4 = Back        (180 deg)
-%   5 = Back-Right  (120 deg)
-%   6 = Front-Right (60 deg)
-% Dots on the clockwise side of the vanishing point keep moving further
-% clockwise (away); dots on the counter-clockwise side keep moving further
-% counter-clockwise (away) -- same angular speed for every dot, so the
-% field splits and streams apart from that one point, rather than the
-% whole field rotating together.
+% r = monitorInfo.radius, in cm. Inner and outer boundaries are 2*r and 3*r.
+% World Geometry 1: cylindrical annulus, radius = hypot(X,Z).
+% World Geometry 2: spherical shell, radius = sqrt(X.^2+Y.^2+Z.^2).
+% The original 2r/3r source was not available; geometry 1 is an explicit
+% default, NOT a claim that the old world was cylindrical.
 %
-% SWEEP DISTANCE: 'Sweep Distance (cm)' is the arc-length equivalent of
-% the total angular displacement each dot travels during the sweep,
-% converted using the arena radius (monitorInfo.radius).
+% Local X = right, Y = up, Z = toward the selected direction.
+% Flow Sign +1: dots converge toward that direction (back-to-front flow).
+% Flow Sign -1: dots expand away from it (forward-observer-travel flow).
+% Between boundary resets, only Z changes; dot sizes/colors stay fixed.
+% Both inner and outer boundaries recycle dots, keeping the shell populated.
+% There are no line-rendering or motion-history parameters.
 %
-% TRIAL STRUCTURE (per repeat): Static_Duration (dots frozen at spawn) ->
-% Sweep_Duration (dots stream apart from the vanishing point) ->
-% Freeze_Duration (dots frozen at their post-sweep position) -> ITI (gray
-% gap before the next repeat; added here as a reasonable default since it
-% wasn't specified -- set to 0 to disable).
-%
-% Everything below is currently a constant (single condition), same as
-% OpticFlow_master_360dots -- trialStruct_RFmapFast_AD will repeat this
-% one condition Repeats+1 times. Sweep Direction is a fixed value for
-% now; can be extended to vary/randomize across trials later the same way
-% other parameters are extended (give it a start:step:stop range and set
-% Randomize = 1).
-monitorInfo = getMonitorInformation();
-
-table = {'Sweep Direction (1-6)', 1, [], [];...     % 1=Front 2=Front-Left 3=Back-Left 4=Back 5=Back-Right 6=Front-Right
-    'Sweep Distance (cm)', 50, [], [];...               % TUNE -- total arc length each dot travels away from the vanishing point
-    'Num Dots', 300, [], [];...
-    'Dot Size Min (px)', 2, [], [];...                  % TUNE -- used directly as dot radius, matching OpticFlow convention
-    'Dot Size Max (px)', 12, [], [];...                 % TUNE
-    'Static Duration (s)', 15, [], [];...               % dots stationary before the sweep
-    'Sweep Duration (s)', 15, [], [];...                % duration of the outward hyperspace sweep
-    'Freeze Duration (s)', 15, [], [];...                % dots frozen in final position after the sweep
-    'ITI (s)', 3, [], [];...                            % TUNE -- gray gap between repeats (added as a default; set to 0 to disable)
-    'Blank', 0, [], [];...
-    'Randomize', 0, [], [];...                          % nothing to randomize yet (one condition)
-    'Interleave', 0, [], [];...
-    'Repeats', 1, [], [];...                            % LOWER/RAISE FOR TESTING vs real experiment
-    'Initialization Screen (s)', 5, [], []};
-
-stimType = 'Linear Sweep';
-user = 'AD'; % experimenter initials
-tag = 'm001'; % change for which mouse it is (m - male, f - female)
-iftest = 1; % if this is a test run, 1, if not a test run, 0
-trials = trialStruct_RFmapFast_AD(stimType, table);
-
-% Metadata: what code/config/rig/session produced this trials struct, so
-% it's saved alongside the data instead of only living in this script.
-meta.monitorInfo    = monitorInfo;
-meta.user            = user;
-meta.tag             = tag;
-meta.stimType        = stimType;
-meta.stimulusTable   = table;
-nowTime              = datetime('now');
-meta.dateStr         = char(datetime(nowTime, 'Format', 'yyyyMMdd'));
-meta.timestamp       = char(datetime(nowTime, 'Format', 'yyyy-MM-dd HH:mm:ss'));
-meta.matlabVersion   = version;
-
-displayLinearSweep_360LED(trials);
+% Required existing lab helpers: getMonitorInformation, PixToLum,
+% GammaCorrect, stimInitScreen, trialStructSave_360. Requires Psychtoolbox.
 
 if nargin < 1 || isempty(savename)
-    savename = 'LinearSweep_Hyperspace'; % default if not supplied
+    savename = 'Hyperspace_360_Continuous_2r3r';
 end
+monitorInfo = getMonitorInformation();
+
+stimulusTable = { ...
+    'Sweep Direction (1-6)',           1, [], []; ...
+    'Flow Sign (-1 expand, +1 contract)', 1, [], []; ...
+    'World Geometry (1 cylinder, 2 sphere)', 1, [], []; ...
+    'Inner Radius (arena r)',          2, [], []; ...
+    'Outer Radius (arena r)',          3, [], []; ...
+    'Virtual Travel (cm)',            150, [], []; ...
+    'Motion Exponent',                1, [], []; ...
+    'Num Dots',                     300, [], []; ...
+    'Dot Size Min (px radius)',        1, [], []; ...
+    'Dot Size Max (px radius)',        2, [], []; ...
+    'Dark Background',                1, [], []; ...
+    'Static Duration (s)',           5, [], []; ...
+    'Sweep Duration (s)',            15, [], []; ...
+    'Freeze Duration (s)',           5, [], []; ...
+    'ITI (s)',                        3, [], []; ...
+    'Random Seed',                    1, [], []; ...
+    'Blank',                          0, [], []; ...
+    'Randomize',                      0, [], []; ...
+    'Interleave',                     0, [], []; ...
+    'Repeats',                        0, [], []; ...
+    'Initialization Screen (s)',      5, [], []};
+
+% Sweep Direction: 1 front (0), 2 front-left (-60), 3 back-left (-120),
+%                  4 back (180), 5 back-right (120), 6 front-right (60).
+% Flow Sign +1 matches the latest request for front-converging flow.
+% Set Flow Sign to -1 for the earlier front-expanding hyperspace effect.
+% Virtual Travel is displacement through the virtual scene, NOT arena arc.
+% Motion Exponent 1 = constant virtual speed; 2 = linearly increasing speed.
+% Dark Background 1 = white dots on black; 0 = black/white dots on mid-gray.
+% Initialization and ITI are mid-gray. Repeats 1 means TWO presentations.
+% To vary directions: 'Sweep Direction (1-6)', 1, 1, 6; then Randomize = 1.
+% Keep Blank = 0 and Interleave = 0; this renderer does not implement them.
+
+% RIG MAPPING: retained from the previous replacement. This assumes one
+% unwrapped rectangular 360-degree panorama, not a rearranged panel atlas.
+% Confirm where physical front is on the rig; it need not be framebuffer x=0.
+arenaMap.rect = [0, 0, round(360 / monitorInfo.degPerPix), ...
+    round(monitorInfo.screenSizeDegY / monitorInfo.degPerPix)];
+arenaMap.azimuthZeroXFraction = 0;
+arenaMap.azimuthSign = 1;
+arenaMap.verticalProjection = 'angular';
+% 'angular' preserves your original elevation-to-pixel formula.
+% 'cylindrical' is for unwarped, equally spaced physical LED rows, with the
+% eye at the cylinder center and vertical midpoint. This SCREEN mapping is
+% independent of the World Geometry parameter above.
+
+stimType = 'Linear Sweep';
+user = 'AD';
+tag = 'm001';
+iftest = 1;  % Used by your save helper; does not enable a desktop preview.
+
+meta.rngBeforeTrialBuilder = rng;
+trials = trialStruct_RFmapFast_AD(stimType, stimulusTable);
+meta.monitorInfo = monitorInfo;
+meta.arenaMap = arenaMap;
+meta.user = user;
+meta.tag = tag;
+meta.stimType = stimType;
+meta.motionModel = 'bounded 3-D world; inner/outer periodic recycling';
+meta.stimulusTable = stimulusTable;
+meta.geometryAssumption = ...
+    'Geometry selection is explicit; original 2r/3r renderer was unavailable.';
+nowTime = datetime('now');
+meta.dateStr = char(datetime(nowTime, 'Format', 'yyyyMMdd'));
+meta.timestamp = char(datetime(nowTime, 'Format', 'yyyy-MM-dd HH:mm:ss'));
+meta.matlabVersion = version;
+meta.masterSource = fileread([mfilename('fullpath') '.m']);
+meta.rendererSource = fileread(which('displayLinearSweep_360LED'));
+meta.trialBuilderSource = fileread(which('trialStruct_RFmapFast_AD'));
+
+% Escape returns a partial presentation log and then saves it here.
+% Other errors are rethrown by the renderer; they are not silently ignored.
+meta.presentation = displayLinearSweep_360LED(trials, monitorInfo, arenaMap);
 trialStructSave_360(trials, meta, savename, tag, iftest);
 end
