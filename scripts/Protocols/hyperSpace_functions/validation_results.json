@@ -1,0 +1,124 @@
+{
+  "scope": "Independent Python geometry/schedule simulation and file-contract checks",
+  "matlab_executed": false,
+  "psychtoolbox_executed": false,
+  "hardware_tested": false,
+  "passed": true,
+  "phases": 37,
+  "movement_trials": 18,
+  "nominal_seconds": 905,
+  "matches_user_posted_condition_order": true,
+  "frames_at_60Hz": 54300,
+  "pool_size": 2895,
+  "expected_visible_centers": 600.0114719121756,
+  "simulated_motion_seconds": 540,
+  "geometry_step_seconds": 0.1,
+  "mean_visible_centers": 599.7285185185185,
+  "min_visible_centers": 525,
+  "max_visible_centers": 686,
+  "hidden_reset_entries_checked": 836778,
+  "maximum_common_translation_error_cm": 7.105427357601002e-15,
+  "by_condition": [
+    {
+      "heading_deg": 120,
+      "speed_cm_s": 45,
+      "mean_visible_centers": 594.6433333333333
+    },
+    {
+      "heading_deg": 120,
+      "speed_cm_s": 180,
+      "mean_visible_centers": 602.0966666666667
+    },
+    {
+      "heading_deg": 300,
+      "speed_cm_s": 45,
+      "mean_visible_centers": 599.5433333333333
+    },
+    {
+      "heading_deg": 240,
+      "speed_cm_s": 45,
+      "mean_visible_centers": 594.6033333333334
+    },
+    {
+      "heading_deg": 0,
+      "speed_cm_s": 90,
+      "mean_visible_centers": 598.2566666666667
+    },
+    {
+      "heading_deg": 0,
+      "speed_cm_s": 180,
+      "mean_visible_centers": 598.3633333333333
+    },
+    {
+      "heading_deg": 180,
+      "speed_cm_s": 45,
+      "mean_visible_centers": 594.0133333333333
+    },
+    {
+      "heading_deg": 60,
+      "speed_cm_s": 90,
+      "mean_visible_centers": 602.9233333333333
+    },
+    {
+      "heading_deg": 120,
+      "speed_cm_s": 90,
+      "mean_visible_centers": 597.3833333333333
+    },
+    {
+      "heading_deg": 0,
+      "speed_cm_s": 45,
+      "mean_visible_centers": 603.4066666666666
+    },
+    {
+      "heading_deg": 240,
+      "speed_cm_s": 180,
+      "mean_visible_centers": 602.1
+    },
+    {
+      "heading_deg": 240,
+      "speed_cm_s": 90,
+      "mean_visible_centers": 599.6266666666667
+    },
+    {
+      "heading_deg": 180,
+      "speed_cm_s": 90,
+      "mean_visible_centers": 602.3266666666667
+    },
+    {
+      "heading_deg": 300,
+      "speed_cm_s": 180,
+      "mean_visible_centers": 598.8333333333334
+    },
+    {
+      "heading_deg": 180,
+      "speed_cm_s": 180,
+      "mean_visible_centers": 602.84
+    },
+    {
+      "heading_deg": 300,
+      "speed_cm_s": 90,
+      "mean_visible_centers": 602.3133333333334
+    },
+    {
+      "heading_deg": 60,
+      "speed_cm_s": 45,
+      "mean_visible_centers": 602.3166666666667
+    },
+    {
+      "heading_deg": 60,
+      "speed_cm_s": 180,
+      "mean_visible_centers": 599.5233333333333
+    }
+  ],
+  "checks": [
+    "freeze/resume without changing XYZ",
+    "all 18 heading/speed conditions",
+    "headings do not rotate the scene",
+    "reset entries outside visible window",
+    "multiple-boundary overshoot preserved",
+    "phase marker toggling",
+    "final terminal inversion",
+    "refresh-slot catch-up",
+    "reproduction of posted order"
+  ]
+}
