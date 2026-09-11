@@ -10,6 +10,8 @@ function [trials, meta] = HyperSpace_master_360dots(savename, design)
 % LeftBoxStim_small, and trialStructSave_360. The latter calls dirInformation_AD.
 % Does NOT call trialStruct_RFmapFast_AD or stimInitScreen: the phase table
 % defines every experiment interval and every repeat. Does not start OneBox.
+% Saves once through trialStructSave_360 to dirInfo.DaqPCDataLoc.
+% No separate local backup is created.
 % Normal completion and ESC save full/partial logs. Caught display errors
 % save known data first, then are rethrown. MATLAB crashes/power loss cannot
 % be recovered by this end-of-run saving mechanism.
@@ -23,9 +25,7 @@ assert(isrow(savename) && ~isempty(regexp(savename,'^[A-Za-z0-9_-]+$','once')), 
 monitorInfo = getMonitorInformation();
 p = HyperSpaceWorld('defaults',monitorInfo);
 R = monitorInfo.radius;
-
 % ------------------- APPEARANCE / WORLD CONTROLS -----------------------
-
 p.Num_Dots = 600;                % Expected visible centers BEFORE fades.
 p.Depth_Min = 2*R;               % Visible near radial cutoff, cm.
 p.Depth_Max = 3*R;               % Visible far radial cutoff, cm.
@@ -42,10 +42,7 @@ iftest = 1;                      % Your existing helper adds _test; still saves.
 options.RecordResetEvents = true;
 options.TerminalMarkerHold_s = 0.5; % OUTSIDE the scheduled protocol duration.
 options.CleanupBlackHold_s = 0.25;   % OUTSIDE the scheduled protocol duration.
-localLogDirectory = fullfile(pwd,'HyperSpace_logs');
-
 % ---------------------------------------------------------------------
-
 HyperSpaceWorld('validate',p,monitorInfo);
 requiredHelpers = {'PixToLum','GammaCorrect','LeftBoxStim_small','trialStructSave_360'};
 for j = 1:numel(requiredHelpers)
@@ -54,16 +51,6 @@ end
 validateattributes(worldSeed,{'numeric'},{'scalar','integer','>=',0,'<=',2^32-1});
 validateattributes(options.TerminalMarkerHold_s,{'numeric'},{'scalar','finite','positive'});
 validateattributes(options.CleanupBlackHold_s,{'numeric'},{'scalar','finite','positive'});
-if ~isfolder(localLogDirectory), mkdir(localLogDirectory); end
-% Test the backup destination BEFORE opening the arena.
-probe = tempname(localLogDirectory);
-[fid,msg] = fopen(probe,'w');
-assert(fid~=-1,'HyperSpace:SaveDirectory','Cannot write local log directory: %s',msg);
-fclose(fid); delete(probe);
-stamp = char(datetime('now','Format','yyyyMMdd_HHmmss_SSS'));
-suffix = ''; if iftest==1, suffix = '_test'; end
-localFile = fullfile(localLogDirectory,[stamp '_' savename '_' tag suffix '_fullLog.mat']);
-assert(exist(localFile,'file')==0,'Refusing to overwrite %s',localFile);
 
 rngBefore = rng;
 rngCleanup = onCleanup(@() rng(rngBefore)); %#ok<NASGU>
@@ -82,7 +69,6 @@ meta.flowModel = 'HyperSpace_persistentTranslation_v1';
 meta.dateStr = char(datetime('now','Format','yyyyMMdd'));
 meta.timestamp = char(datetime('now','Format','yyyy-MM-dd HH:mm:ss'));
 meta.matlabVersion = version;
-meta.localLogFile = localFile;
 meta.photodiodeMeaning = ['Option 1: patch constant within phase; inversion on phase ', ...
     'transitions. First stationary onset is first optical edge. Terminal and ', ...
     'cleanup events are separately logged. No physical voltage is acquired here.'];
@@ -106,7 +92,7 @@ end
 fprintf('\nHyperSpace: %d phases, %d movement trials, %.3f nominal seconds.\n', ...
     height(protocol),design.NumTrials,design.TotalNominalSeconds);
 fprintf('Photodiode: phase-boundary toggles. Start OneBox recording separately.\n');
-fprintf('ESC aborts and saves a partial log. Local log:\n%s\n\n',localFile);
+fprintf('ESC aborts and saves a partial log through trialStructSave_360.\n\n');
 [meta.displayLog, displayError] = displayHyperSpace_360LED(protocol,p,monitorInfo,options);
 
 % A convenient top-level record for EACH stationary+movement pair.
@@ -122,21 +108,15 @@ summary.MotionCompleted = ph.Completed(motionRows);
 trials = table2struct(summary);
 meta.movementTrials = summary;
 meta.savedAfterStatus = meta.displayLog.status;
-% Unconditional local copy protects against a lab/network save-helper failure.
-try
-    save(localFile,'trials','meta','-v7.3');
-catch saveError
-    fprintf(2,'LOCAL SAVE FAILED: %s\n',saveError.message);
-    if ~isempty(displayError), saveError = addCause(saveError,displayError); end
-    rethrow(saveError);
-end
-fprintf('\nHyperSpace log saved locally:\n%s\n',localFile);
+% Save trials and the complete meta structure once, using the configured directory.
 try
     trialStructSave_360(trials,meta,savename,tag,iftest);
-catch labSaveError
-    fprintf(2,'LAB SAVE FAILED. The complete local file is at:\n%s\n',localFile);
-    if ~isempty(displayError), labSaveError = addCause(labSaveError,displayError); end
-    rethrow(labSaveError);
+catch saveError
+    fprintf(2,'STIMULUS SAVE FAILED: %s\n',saveError.message);
+    if ~isempty(displayError)
+        saveError = addCause(saveError,displayError);
+    end
+    rethrow(saveError);
 end
 if ~isempty(displayError), rethrow(displayError); end
 fprintf('HyperSpace ended with status: %s\n',meta.displayLog.status);
