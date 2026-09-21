@@ -8,10 +8,10 @@ function [protocol, design] = makeHyperSpaceProtocol(design, quiet)
 
 if nargin < 1 || isempty(design)
     % ------------------ EDIT THE EXPERIMENT HERE -----------------------
-    design.InitialBlack_s = 5;
+    design.InitialBlack_s = 10;
     design.Stationary_s = 20;
     design.Motion_s = 30;
-    design.Directions_deg = [0, 180];
+    design.Directions_deg = [0, 45, 90, 135, 180, 225, 270, 315];
     design.Speeds_cm_s = [90, 180];
     [d, s] = ndgrid(1:numel(design.Directions_deg), ...
                     1:numel(design.Speeds_cm_s));
