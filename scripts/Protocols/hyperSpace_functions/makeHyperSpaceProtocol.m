@@ -8,15 +8,15 @@ function [protocol, design] = makeHyperSpaceProtocol(design, quiet)
 
 if nargin < 1 || isempty(design)
     % ------------------ EDIT THE EXPERIMENT HERE -----------------------
-    design.InitialBlack_s = 10;
-    design.Stationary_s = 20;
-    design.Motion_s = 30;
+    design.InitialBlack_s = 5;
+    design.Stationary_s = 4;
+    design.Motion_s = 2;
     design.Directions_deg = [0, 45, 90, 135, 180, 225, 270, 315];
     design.Speeds_cm_s = [90, 180];
     [d, s] = ndgrid(1:numel(design.Directions_deg), ...
                     1:numel(design.Speeds_cm_s));
     design.Sequence = [d(:), s(:)]; % [direction INDEX, speed INDEX]
-    design.BlockRepeats = 1;       % Actual number of blocks, not extra repeats.
+    design.BlockRepeats = 30;       % Actual number of blocks, not extra repeats.
     design.RandomizeWithinBlock = true;
     design.Seed = 1;               % Same seed -> same reproducible order.
     % -----------------------------------------------------------------

@@ -61,7 +61,7 @@ worldSeed = 1;
 user = 'AD';
 tag = 'm002';
 
-iftest = 1;
+iftest = 0;
 
 options.RecordResetEvents = true;
 
