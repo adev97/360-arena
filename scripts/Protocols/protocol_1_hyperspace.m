@@ -13,5 +13,5 @@ addpath(fileparts(mfilename('fullpath')), '-begin');
 % Confirm OneBox recording before starting the display.
 input('Start OneBox recording, then press Enter to run (Ctrl+C to cancel): ', 's');
 
-% Run the full protocol. Edit dot numnber and size here
+% Run the full protocol. Edit dot number and size here
 [trials, meta] = HyperSpace_master_360dots('hyperspace_protocol_1', design);
